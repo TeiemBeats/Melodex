@@ -6,6 +6,6 @@ FetchContent_Declare(JUCE GIT_REPOSITORY https://github.com/juce-framework/JUCE.
 FetchContent_MakeAvailable(JUCE)
 juce_add_plugin(MELODEX COMPANY_NAME "Markees Beats Labs" BUNDLE_ID "com.markeesbeatslabs.melodex" PLUGIN_MANUFACTURER_CODE MkBL PLUGIN_CODE MldX FORMATS VST3 PRODUCT_NAME "MELODEX" IS_SYNTH TRUE NEEDS_MIDI_INPUT TRUE NEEDS_MIDI_OUTPUT FALSE COPY_PLUGIN_AFTER_BUILD FALSE)
 target_sources(MELODEX PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp)
-target_compile_definitions(MELODEX PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_compile_definitions(MELODEX PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
 target_link_libraries(MELODEX PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_audio_processors juce::juce_gui_extra)
 juce_generate_juce_header(MELODEX)
