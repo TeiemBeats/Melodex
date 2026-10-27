@@ -1,0 +1,31 @@
+name: Build AI Mastering 13 Windows VST3
+on:
+  workflow_dispatch:
+  push:
+    branches: [build/ai-mastering-13]
+    paths:
+      - 'AI-Mastering-13/**'
+      - '.github/workflows/ai-mastering-13.yml' 
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure x64
+        run: cmake -S AI-Mastering-13 -B build-ai-mastering -G "Visual Studio 17 2022" -A x64
+      - name: Build DSP checks
+        shell: cmd
+        run: >-
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+          cl /std:c++17 /EHsc /I AI-Mastering-13\Source AI-Mastering-13\tests\dsp_test.cpp /Fe:dsp_test.exe && dsp_test.exe
+      - name: Compile plugin and standalone
+        run: cmake --build build-ai-mastering --config Release --target AIMastering13_VST3 AIMastering13_Standalone
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AI-Mastering-13-Windows-x64
+          path: |
+            build-ai-mastering/AIMastering13_artefacts/Release/VST3/
+            build-ai-mastering/AIMastering13_artefacts/Release/Standalone/
+          if-no-files-found: error
