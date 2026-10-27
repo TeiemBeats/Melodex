@@ -12,7 +12,9 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build release VST3
-        run: cmake --build build --config Release --target MELODEX_VST3 --parallel 2
+        run: cmake --build build --config Release --target MELODEX_VST3 preset_tests plugin_tests --parallel 2
+      - name: Test presets, MIDI and state
+        run: ctest --test-dir build -C Release --output-on-failure
       - name: Package VST3
         shell: pwsh
         run: |
@@ -20,8 +22,16 @@ jobs:
           if (-not $vst3) { throw "MELODEX.vst3 not found" }
           New-Item -Type Directory -Force -Path package | Out-Null
           Copy-Item -LiteralPath $vst3.FullName -Destination package -Recurse
+          Copy-Item README.md package/INSTALL.md
       - uses: actions/upload-artifact@v4
         with:
           name: MELODEX-Windows-x64-VST3
-          path: package/MELODEX.vst3
+          path: package/
+          if-no-files-found: error
+
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Melodex-interface-preview
+          path: build/Melodex-interface.png
           if-no-files-found: error
