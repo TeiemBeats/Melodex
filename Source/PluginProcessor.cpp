@@ -22,6 +22,7 @@ struct Sound : juce::SynthesiserSound {
 struct Voice : juce::SynthesiserVoice {
  juce::AudioProcessorValueTreeState& params;
  juce::ADSR envelope;
+ juce::ADSR::Parameters applied {-1,-1,-1,-1};
  double phase=0, phaseB=0, frequency=440;
  float velocity=0, lowpass=0;
  explicit Voice(juce::AudioProcessorValueTreeState& p):params(p){}
@@ -36,7 +37,8 @@ struct Voice : juce::SynthesiserVoice {
  void controllerMoved(int,int) override {}
  void stopNote(float,bool tail) override {if(tail)envelope.noteOff();else{envelope.reset();clearCurrentNote();}}
  void renderNextBlock(juce::AudioBuffer<float>& b,int start,int count) override {
-  envelope.setParameters({value("Attack"),value("Decay"),value("Sustain"),value("Release")});
+  juce::ADSR::Parameters requested {value("Attack"),value("Decay"),value("Sustain"),value("Release")};
+  if(requested.attack!=applied.attack || requested.decay!=applied.decay || requested.sustain!=applied.sustain || requested.release!=applied.release){applied=requested;envelope.setParameters(applied);}
   const auto sr=getSampleRate(); const auto hz=frequency*bend;
   auto engine=juce::jlimit(0,7,juce::roundToInt(value("Engine"))); auto shape=value("Sound Shapes");
   const auto drift=std::pow(2.,value("Detune")/1200.);

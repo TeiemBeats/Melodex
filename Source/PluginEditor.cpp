@@ -28,7 +28,8 @@ MelodexEditor::MelodexEditor(MelodexProcessor& p):AudioProcessorEditor(&p),proce
  const char* titles[]={"OUTPUT","CHARACTER","TONE / Hz","DETUNE / ct","REVERB","ECHO","ATTACK / s","DECAY / s","SUSTAIN","RELEASE / s","DELAY / s","MOTION"};
  for(int i=0;i<12;++i){auto& k=knobs[i];k.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);k.setTextBoxStyle(juce::Slider::TextBoxBelow,false,80,20);k.setNumDecimalPlacesToDisplay(i==2?0:2);k.setDoubleClickReturnValue(true,processor.params.getRawParameterValue(ids[i])->load());addAndMakeVisible(k);
  labels[i].setText(titles[i],juce::dontSendNotification);labels[i].setColour(juce::Label::textColourId,muted);labels[i].setFont(12.f);labels[i].setJustificationType(juce::Justification::centred);addAndMakeVisible(labels[i]);
- attachments.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.params,ids[i],k));}
+ attachments.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.params,ids[i],k));
+ k.textFromValueFunction=[i](double v){return juce::String(v,i==2?0:2);};k.updateText();}
  keyboard.setAvailableRange(36,96);keyboard.setLowestVisibleKey(48);keyboard.setKeyWidth(24);keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,royal.withAlpha(.8f));addAndMakeVisible(keyboard);
  refresh();timerCallback();startTimerHz(12);
 }
@@ -51,7 +52,7 @@ void MelodexEditor::paint(juce::Graphics& g){
  g.setColour(royal);g.fillRect(0,0,getWidth(),4);g.setFont(38.f);g.setColour(ink);g.drawText("MELODEX",26,17,340,48,juce::Justification::centredLeft);
  g.setFont(13.f);g.setColour(muted);g.drawText("By Mark33s Beats Labs",28,65,400,22,juce::Justification::centredLeft);
  g.setColour(royal);g.setFont(14.f);g.drawText("FACTORY COLLECTION   /   2,000 SOUNDS",650,30,382,24,juce::Justification::centredRight);
- g.setColour(muted);g.setFont(11.f);g.drawText("POLYPHONIC SYNTHESIS  •  MIDI IN  •  VST3",650,58,382,20,juce::Justification::centredRight);
+ g.setColour(muted);g.setFont(11.f);g.drawText("POLYPHONIC SYNTHESIS  |  MIDI IN  |  VST3",650,58,382,20,juce::Justification::centredRight);
  g.setColour(panel);g.fillRoundedRectangle(18,112,280,470,8);g.fillRoundedRectangle(312,112,730,470,8);
  g.setColour(royal.withAlpha(.45f));g.drawRoundedRectangle(312,112,730,78,8,1);
  g.setColour(muted);g.setFont(11.f);g.drawText("SOUND LIBRARY",32,122,250,24,juce::Justification::centredLeft);
