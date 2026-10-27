@@ -1,0 +1,41 @@
+name: Build Orbit33 Windows App and VST3
+on:
+  push:
+    branches: [codex/orbit33-power-synth]
+    paths: ['Orbit33/**', '.github/workflows/orbit33-windows.yml']
+  pull_request:
+    paths: ['Orbit33/**', '.github/workflows/orbit33-windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  orbit33-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Orbit33
+        run: cmake -S Orbit33 -B build-orbit33 -G "Visual Studio 17 2022" -A x64
+      - name: Build standalone, plugin and tests
+        run: cmake --build build-orbit33 --config Release --target Orbit33_VST3 Orbit33_Standalone orbit33_presets orbit33_tests --parallel 2
+      - name: Verify presets, MIDI, layers and state
+        run: ctest --test-dir build-orbit33 -C Release --output-on-failure
+      - name: Package Orbit33
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem build-orbit33/Orbit33_artefacts/Release/VST3 -Directory -Filter Orbit33.vst3 | Select-Object -First 1
+          $app = Get-Item build-orbit33/Orbit33_artefacts/Release/Standalone/Orbit33.exe
+          if (-not $plugin -or -not $app) { throw "Missing Orbit33 output" }
+          New-Item -Type Directory -Force -Path package-orbit33 | Out-Null
+          Copy-Item -LiteralPath $plugin.FullName -Destination package-orbit33 -Recurse
+          Copy-Item -LiteralPath $app.FullName -Destination package-orbit33
+          Copy-Item Orbit33/README.md package-orbit33/INSTALL.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Orbit33-Windows-x64-App-and-VST3
+          path: package-orbit33/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Orbit33-interface-preview
+          path: build-orbit33/Orbit33-interface.png
+          if-no-files-found: error
