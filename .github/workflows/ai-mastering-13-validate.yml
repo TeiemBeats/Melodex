@@ -1,0 +1,41 @@
+name: Validate AI Mastering 13 Windows VST3
+on:
+  workflow_dispatch:
+  push:
+    branches: [build/ai-mastering-13]
+    paths: ['.github/workflows/ai-mastering-13-validate.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: AI-Mastering-13-Windows-x64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 40458587047
+          path: compiled
+      - name: Download pluginval 1.0.4
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath validator
+      - name: Validate Windows VST3 at strictness level 5
+        shell: pwsh
+        run: |
+          $validatorExe = (Get-ChildItem validator -Recurse -Filter pluginval.exe | Select-Object -First 1).FullName
+          $pluginBundle = (Get-ChildItem compiled -Recurse -Directory -Filter '*.vst3' | Select-Object -First 1).FullName
+          if (!$validatorExe -or !$pluginBundle) { throw 'Validator or plugin bundle missing' }
+          New-Item -ItemType Directory reports -Force | Out-Null
+          & $validatorExe --strictness-level 5 --validate-in-process --output-dir reports $pluginBundle
+          if ($LASTEXITCODE -ne 0) { throw "pluginval failed: $LASTEXITCODE" }
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Mastering-13-pluginval-report
+          path: reports/
+          if-no-files-found: warn
