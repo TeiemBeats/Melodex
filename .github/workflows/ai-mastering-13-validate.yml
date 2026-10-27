@@ -30,8 +30,9 @@ jobs:
           $pluginBundle = (Get-ChildItem compiled -Recurse -Directory -Filter '*.vst3' | Select-Object -First 1).FullName
           if (!$validatorExe -or !$pluginBundle) { throw 'Validator or plugin bundle missing' }
           New-Item -ItemType Directory reports -Force | Out-Null
-          & $validatorExe --strictness-level 5 --validate-in-process --output-dir reports $pluginBundle
-          if ($LASTEXITCODE -ne 0) { throw "pluginval failed: $LASTEXITCODE" }
+          $arguments = "--strictness-level 5 --validate-in-process --output-dir `"$(Resolve-Path reports)`" `"$pluginBundle`""
+          $validation = Start-Process -FilePath $validatorExe -ArgumentList $arguments -Wait -PassThru -NoNewWindow
+          if ($validation.ExitCode -ne 0) { throw "pluginval failed: $($validation.ExitCode)" }
       - name: Upload validation logs
         if: always()
         uses: actions/upload-artifact@v4
